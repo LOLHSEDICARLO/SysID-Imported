@@ -28,29 +28,34 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
 
 import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
 
-
+//TODO:  Use Config for TalonFX motors, set the inverted in config (see depricated setInverted below near end of this class)
+//set right motor to inverted, using TalonFXConfiguration object, in MotorOutputConfigs group).
+//see 2025-Robot Elevator subsystem for example
 
 public class Drive extends SubsystemBase {
   // The motors on the left side of the drive.
     private final TalonFX m_leftMotor = new TalonFX(DriveConstants.kLeftMotor1Port, "usb");
     private final TalonFX m_leftFollower = new TalonFX(DriveConstants.kLeftMotor2Port, "usb");
-  //private final PWMSparkMax m_leftMotor = new PWMSparkMax(DriveConstants.kLeftMotor1Port);
 
   // The motors on the right side of the drive.Left
   private final TalonFX m_rightMotor = new TalonFX(DriveConstants.kRightMotor1Port, "usb");
   private final TalonFX m_rightFollower = new TalonFX(DriveConstants.kRightMotor2Port, "usb");
 
-  
   // The robot's drive
   private final DifferentialDrive m_drive =
       new DifferentialDrive(m_leftMotor::set, m_rightMotor::set);
@@ -112,12 +117,12 @@ public class Drive extends SubsystemBase {
                         m_appliedVoltage.mut_replace(
                             m_leftMotor.get() * RobotController.getBatteryVoltage(), Volts))
                   ///getPosition returns Rotations. Need to multiply by distance per revolutions to get distance (meters)
-                    .linearPosition(m_distance.mut_replace(m_leftMotor.getPosition().getValueAsDouble()*DriveConstants.kEncoderDistancePerRevolution, Meters))
-                  //.linearPosition(m_distance.mut_replace(m_leftEncoder.getDistance(), Meters)) //distance since last reset, as scaled by setDistancePerPuls
+                   // .linearPosition(m_distance.mut_replace(m_leftMotor.getPosition().getValueAsDouble()*DriveConstants.kEncoderDistancePerRevolution, Meters))
+                  .linearPosition(m_distance.mut_replace(m_leftEncoder.getDistance(), Meters)) //distance since last reset, as scaled by setDistancePerPuls
                    
                   ///getVelocity returns rotations/sec. Need to multiply by distance per revolutions to get meters/sec
-                 .linearVelocity(m_velocity.mut_replace(m_leftMotor.getVelocity().getValueAsDouble()*DriveConstants.kEncoderDistancePerRevolution, MetersPerSecond));
-                 // .linearVelocity(m_velocity.mut_replace(m_leftEncoder.getRate(), MetersPerSecond));  //distance per second, as scaled by the value of distance per pulse
+                 //.linearVelocity(m_velocity.mut_replace(m_leftMotor.getVelocity().getValueAsDouble()*DriveConstants.kEncoderDistancePerRevolution, MetersPerSecond));
+                  .linearVelocity(m_velocity.mut_replace(m_leftEncoder.getRate(), MetersPerSecond));  //distance per second, as scaled by the value of distance per pulse
                 
                  // Record a frame for the right motors.  Since these share an encoder, we consider
                 // the entire group to be one motor.
@@ -140,6 +145,7 @@ public class Drive extends SubsystemBase {
 
   /** Creates a new Drive subsystem. */
   public Drive() {
+
     // Make the second motors (back motors) on each side of the drivetrain into followers
    m_rightFollower.setControl(new Follower(DriveConstants.kRightMotor1Port, false));
    m_leftFollower.setControl(new Follower(DriveConstants.kLeftMotor1Port, false));
