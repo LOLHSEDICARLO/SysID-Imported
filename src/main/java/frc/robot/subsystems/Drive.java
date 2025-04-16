@@ -36,6 +36,8 @@ import java.util.function.DoubleSupplier;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -56,7 +58,11 @@ public class Drive extends SubsystemBase {
   private final TalonFX m_rightMotor = new TalonFX(DriveConstants.kRightMotor1Port, "usb");
   private final TalonFX m_rightFollower = new TalonFX(DriveConstants.kRightMotor2Port, "usb");
 
-  // The robot's drive
+
+//private TalonFXConfigurator leftMotorConfig, rightMotorConfig, leftFollowConfig, rightFollowConfig;
+private TalonFXConfiguration leftTalonMotorConfig, rightTalonMotorConfig, leftTalonFollowConfig, rightTalonFollowConfig;
+
+// The robot's drive
   private final DifferentialDrive m_drive =
       new DifferentialDrive(m_leftMotor::set, m_rightMotor::set);
 
@@ -145,14 +151,25 @@ public class Drive extends SubsystemBase {
 
   /** Creates a new Drive subsystem. */
   public Drive() {
-
-    // Make the second motors (back motors) on each side of the drivetrain into followers
-   m_rightFollower.setControl(new Follower(DriveConstants.kRightMotor1Port, false));
-   m_leftFollower.setControl(new Follower(DriveConstants.kLeftMotor1Port, false));
-    // We need to invert one side of the drivetrain so that positive voltages
+   // TODO:  need to invert one side of the drivetrain so that positive voltages
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
-    m_rightMotor.setInverted(true); ///TODO - determine if this is true or not
+   // m_rightMotor.setInverted(true); REDACTED FORMAT OF INVERTING ONE TALON
+    leftTalonMotorConfig = new TalonFXConfiguration();
+    leftTalonMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;//ONE Pos, ONE Neg.
+    leftTalonMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+    leftTalonMotorConfig.CurrentLimits.SupplyCurrentLimit = 40;
+    m_leftMotor.getConfigurator().apply(leftTalonMotorConfig);
+
+    rightTalonMotorConfig = new TalonFXConfiguration();
+    rightTalonMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;//One pos., One neg.
+    rightTalonMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+    rightTalonMotorConfig.CurrentLimits.SupplyCurrentLimit = 40;
+    m_rightMotor.getConfigurator().apply(rightTalonMotorConfig);
+    
+  // Make the second motors (back motors) on each side of the drivetrain into followers
+  m_rightFollower.setControl(new Follower(DriveConstants.kRightMotor1Port, false));
+  m_leftFollower.setControl(new Follower(DriveConstants.kLeftMotor1Port, false));
 
     // Sets the distance per pulse for the encoders
     m_leftEncoder.setDistancePerPulse(DriveConstants.kEncoderDistancePerPulse);
